@@ -51,22 +51,28 @@ public class TicketService {
 
 
     public TicketEntity previousTicket(String service, String location) {
-        if (!ticketRepository.findByServiceAndLocationAndActiveTrueOrderByTicketNumberAsc(service, location).isEmpty()) {
-            return null;
-        }
+        TicketEntity current = ticketRepository
+                .findFirstByServiceAndLocationAndActiveTrueOrderByTicketNumberAsc(service, location);
 
-        TicketEntity lastInactive = ticketRepository
-                .findFirstByServiceAndLocationAndActiveFalseOrderByCreatedAtDesc(service, location);
+        if (current == null) return null;
 
-        if (lastInactive != null) {
-            lastInactive.setActive(true);
-            return ticketRepository.save(lastInactive);
+        // Désactive le ticket courant
+        current.setActive(false);
+        ticketRepository.save(current);
+
+        // Cherche le ticket précédent
+        TicketEntity previous = ticketRepository
+                .findFirstByServiceAndLocationAndActiveFalseAndTicketNumberLessThanOrderByTicketNumberDesc(
+                        service, location, current.getTicketNumber()
+                );
+
+        if (previous != null) {
+            previous.setActive(true);
+            return ticketRepository.save(previous);
         }
 
         return null;
     }
-
-
 
     public void resetAll() {
         List<TicketEntity> allTickets = ticketRepository.findAll();
@@ -79,5 +85,10 @@ public class TicketService {
     public List<TicketEntity> getAllTickets() {
         return ticketRepository.findAllByOrderByCreatedAtDesc();
     }
+
+    public List<TicketEntity> getProcessedTickets(String service, String location) {
+        return ticketRepository.findByServiceAndLocationAndActiveFalseOrderByTicketNumberAsc(service, location);
+    }
+
 
 }

@@ -23,4 +23,12 @@ public interface TicketRepository extends JpaRepository<TicketEntity, Long> {
 
     TicketEntity findFirstByServiceAndLocationAndActiveFalseOrderByCreatedAtDesc(String service, String location);
 
+    List<TicketEntity> findByServiceAndLocationAndActiveFalseOrderByTicketNumberAsc(String service, String location);
+
+
+    TicketEntity findFirstByServiceAndLocationAndActiveFalseAndTicketNumberLessThanOrderByTicketNumberDesc(
+            String service,
+            String location,
+            int ticketNumber
+    );
 }

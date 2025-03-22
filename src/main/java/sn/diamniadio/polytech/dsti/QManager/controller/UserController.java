@@ -70,8 +70,5 @@ public class UserController {
         return response;
     }
 
-    @GetMapping("/debug/all-tickets")
-    public List<TicketEntity> getAllTickets() {
-        return ticketService.getAllTickets();
-    }
+
 }
