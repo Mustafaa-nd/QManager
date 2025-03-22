@@ -65,6 +65,8 @@ public class UserController {
         response.put("peopleAhead", position - 1);
         response.put("currentTicket", ticketService.getCurrentTicket(service, location));
 
+        System.out.println("🎫 Nouveau ticket généré: " + newTicket.getTicketNumber());
+
         return response;
     }
 

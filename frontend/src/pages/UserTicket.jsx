@@ -1,5 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
+
+const MySwal = withReactContent(Swal);
 
 function UserTicket() {
     const [ticket, setTicket] = useState(null);
@@ -11,12 +15,21 @@ function UserTicket() {
     const service = searchParams.get("service");
     const location = searchParams.get("location");
 
+    const hasFetched = useRef(false);
+
     useEffect(() => {
-        if (!service || !location) return;
+        if (!service || !location || hasFetched.current) return;
 
         const cacheKey = `ticket-${service}-${location}`;
-        const cached = localStorage.getItem(cacheKey);
+        const sessionKey = `fetched-${service}-${location}`;
 
+        // 👇 Supprimer uniquement si c'est la première fois de la session
+        if (!sessionStorage.getItem(sessionKey)) {
+            localStorage.removeItem(cacheKey);
+            sessionStorage.setItem(sessionKey, "true");
+        }
+
+        const cached = localStorage.getItem(cacheKey);
         if (cached) {
             const data = JSON.parse(cached);
             setTicket(data.ticket);
@@ -25,6 +38,8 @@ function UserTicket() {
             setCurrentTicket(data.currentTicket);
             return;
         }
+
+        hasFetched.current = true;
 
         fetch(`http://localhost:8080/api/user/generateTicketWithInfo?service=${service}&location=${location}`, {
             method: "POST"
@@ -35,7 +50,7 @@ function UserTicket() {
                 setPosition(data.position);
                 setPeopleAhead(data.peopleAhead);
                 setCurrentTicket(data.currentTicket);
-                localStorage.setItem(cacheKey, JSON.stringify(data)); // ⬅️ on sauvegarde le ticket généré
+                localStorage.setItem(cacheKey, JSON.stringify(data));
             })
             .catch((err) => {
                 console.error("Erreur lors de la génération du ticket :", err);
@@ -43,7 +58,21 @@ function UserTicket() {
     }, [service, location]);
 
 
-
+    const handleNewTicketClick = () => {
+        MySwal.fire({
+            title: "Êtes-vous sûr ?",
+            text: "Vous êtes sur le point de générer un nouveau ticket.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Oui, générer",
+            cancelButtonText: "Annuler",
+        }).then((result) => {
+            if (result.isConfirmed) {
+                localStorage.removeItem(`ticket-${service}-${location}`);
+                window.location.reload();
+            }
+        });
+    };
 
     if (!ticket || !currentTicket) {
         return (
@@ -65,6 +94,13 @@ function UserTicket() {
                 <p className="text-lg">Personnes devant vous : <span className="font-semibold">{peopleAhead}</span></p>
                 <p className="text-lg mt-4">Numéro en cours de traitement : <span className="font-semibold">{currentTicket?.ticketNumber || "Aucun"}</span></p>
             </div>
+
+            <button
+                className="mt-6 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
+                onClick={handleNewTicketClick}
+            >
+                Générer un nouveau ticket
+            </button>
 
             <footer className="mt-6 text-center text-gray-500 text-sm">
                 Merci d'avoir utilisé le service <span className="font-semibold">{ticket.service}</span> QM. <br />
