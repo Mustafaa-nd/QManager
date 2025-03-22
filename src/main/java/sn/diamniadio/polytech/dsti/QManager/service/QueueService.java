@@ -11,19 +11,32 @@ public class QueueService {
     private final Map<String, Stack<QueueTicket>> history = new HashMap<>(); // Historique des tickets passés
     private final Map<String, Integer> ticketNumbers = new HashMap<>();
 
-    public QueueTicket generateTicket(String service, String location) {
+    public synchronized QueueTicket generateTicket(String service, String location) {
         String key = service + "-" + location;
         queues.putIfAbsent(key, new LinkedList<>());
-        history.putIfAbsent(key, new Stack<>()); // Initialise la pile d'historique
+        history.putIfAbsent(key, new Stack<>());
         ticketNumbers.putIfAbsent(key, 1);
 
         int ticketNumber = ticketNumbers.get(key);
         QueueTicket ticket = new QueueTicket(ticketNumber, service, location);
-        queues.get(key).add(ticket);
-        ticketNumbers.put(key, ticketNumber + 1);
+
+        Queue<QueueTicket> queue = queues.get(key);
+
+        // Ne pas ajouter un ticket déjà présent
+        boolean alreadyExists = queue.stream()
+                .anyMatch(t -> t.getTicketNumber() == ticketNumber);
+
+        if (!alreadyExists) {
+            queue.add(ticket);
+            ticketNumbers.put(key, ticketNumber + 1);
+            System.out.println("✔️ Ticket ajouté : #" + ticketNumber);
+        } else {
+            System.out.println("⚠️ Ticket déjà présent : #" + ticketNumber);
+        }
 
         return ticket;
     }
+
 
     public QueueTicket getCurrentTicket(String service, String location) {
         String key = service + "-" + location;

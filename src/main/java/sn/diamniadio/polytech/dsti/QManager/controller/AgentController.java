@@ -2,14 +2,11 @@ package sn.diamniadio.polytech.dsti.QManager.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import sn.diamniadio.polytech.dsti.QManager.service.QueueService;
-import sn.diamniadio.polytech.dsti.QManager.util.DataLoader;
-import sn.diamniadio.polytech.dsti.QManager.model.Service;
-import sn.diamniadio.polytech.dsti.QManager.model.AgentAction;
+import sn.diamniadio.polytech.dsti.QManager.entity.TicketEntity;
+import sn.diamniadio.polytech.dsti.QManager.service.TicketService;
 
-import java.util.List;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/agent")
@@ -17,7 +14,7 @@ import java.util.HashMap;
 public class AgentController {
 
     @Autowired
-    private QueueService queueService;
+    private TicketService ticketService;
 
     private static final Map<String, String> agents = new HashMap<>();
 
@@ -35,12 +32,22 @@ public class AgentController {
     }
 
     @PostMapping("/nextTicket")
-    public void nextTicket(@RequestParam String service, @RequestParam String location) {
-        queueService.nextTicket(service, location);
+    public TicketEntity nextTicket(@RequestParam String service, @RequestParam String location) {
+        ticketService.nextTicket(service, location);
+        return ticketService.getCurrentTicket(service, location);
     }
 
     @PostMapping("/previousTicket")
-    public void previousTicket(@RequestParam String service, @RequestParam String location) {
-        queueService.previousTicket(service, location);
+    public TicketEntity previousTicket(@RequestParam String service, @RequestParam String location) {
+        ticketService.previousTicket(service, location);
+        return ticketService.getCurrentTicket(service, location);
+    }
+
+    @GetMapping("/current")
+    public Map<String, Object> getCurrent(@RequestParam String service, @RequestParam String location) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("currentTicket", ticketService.getCurrentTicket(service, location));
+        map.put("remaining", ticketService.getRemainingCount(service, location));
+        return map;
     }
 }

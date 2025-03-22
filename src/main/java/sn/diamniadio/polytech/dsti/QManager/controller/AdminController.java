@@ -2,8 +2,8 @@ package sn.diamniadio.polytech.dsti.QManager.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import sn.diamniadio.polytech.dsti.QManager.service.AdminService;
-import sn.diamniadio.polytech.dsti.QManager.model.AgentAction;
+import sn.diamniadio.polytech.dsti.QManager.entity.TicketEntity;
+import sn.diamniadio.polytech.dsti.QManager.service.TicketService;
 
 import java.util.List;
 
@@ -13,15 +13,21 @@ import java.util.List;
 public class AdminController {
 
     @Autowired
-    private AdminService adminService;
+    private TicketService ticketService;
 
     @PostMapping("/login")
     public boolean login(@RequestParam String username, @RequestParam String password) {
         return "greatfather".equals(username) && "alone".equals(password);
     }
 
-    @GetMapping("/actions")
-    public List<AgentAction> getActions() {
-        return adminService.getActions();
+    @GetMapping("/all")
+    public List<TicketEntity> getAllTickets() {
+        return ticketService.getAllTickets();
+    }
+
+
+    @DeleteMapping("/reset")
+    public void resetAllTickets() {
+        ticketService.resetAll();
     }
 }
